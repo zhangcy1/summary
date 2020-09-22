@@ -118,33 +118,61 @@
         />
       </div>
     </div>
+    <script src="./utils.js"></script>
     <script>
-      // 获取所有的图片标签的 class
-      const lazyImg = document.getElementsByClassName('lazy-img')
-      // 获取可视区域的高度
-      const viewHeight =
-        window.innerHeight || document.documentElement.clientHeight
-      // num用于统计当前显示到了哪一张图片，避免每次都从第一张图片开始检查是否露出
-      let num = 0
-      function lazyLoad() {
-        for (let i = num; i < lazyImg.length; i++) {
-          // 用可视区域高度减去元素顶部距离可视区域顶部的高度
-          let distance = viewHeight - lazyImg[i].getBoundingClientRect().top
-          // 如果可视区域高度大于等于元素顶部距离可视区域顶部的高度，说明元素露出
-          if (distance >= 0) {
-            // 给元素写入真实的src，展示图片
-            lazyImg[i].src = lazyImg[i].getAttribute('data-src')
-            // 前i张图片已经加载完毕，下次从第i+1张开始检查是否露出
-            num = i + 1
+      class InitDom {
+        constructor() {
+          this.num = 0 // num用于统计当前显示到了哪一张图片，避免每次都从第一张图片开始检查是否露出
+          this.lazyImg = [] // 图片标签的 class
+          this.viewHeight = 0 // 可视区域的高度
+          this.distance = 0 // 可视区域高度减去元素顶部距离可视区域顶部的高度差
+        }
+        init() {
+          // 获取所有的图片标签的 class
+          this.lazyImg = document.getElementsByClassName('lazy-img')
+          // 获取可视区域的高度
+          this.viewHeight =
+            window.innerHeight || document.documentElement.clientHeight
+        }
+        lazyLoad() {
+          // 图片加载后禁止触发 scroll 事件
+          if (this.num === this.lazyImg.length) return false
+          console.log('scroll++') // 检测 scroll 事件执行的频率
+          for (let i = this.num; i < this.lazyImg.length; i++) {
+            // 用可视区域高度减去元素顶部距离可视区域顶部的高度
+            this.distance =
+              this.viewHeight - this.lazyImg[i].getBoundingClientRect().top
+            // 如果可视区域高度大于等于元素顶部距离可视区域顶部的高度，说明元素露出
+            if (this.distance >= 0) {
+              // 给元素写入真实的src，展示图片
+              this.lazyImg[i].src = this.lazyImg[i].getAttribute('data-src')
+              // 前i张图片已经加载完毕，下次从第i+1张开始检查是否露出
+              this.num = i + 1
+            }
           }
         }
       }
+
+      const initDom = new InitDom()
+
       // 第一次打开，首次加载
       window.onload = function () {
-        lazyLoad()
+        initDom.init()
+        initDom.lazyLoad()
       }
+
+      const utils = new Utils()
       // 监听Scroll事件
-      window.addEventListener('scroll', lazyLoad, false)
+      // window.addEventListener('scroll', () => {initDom.lazyLoad()}, false) // 不节流
+      
+      // 节流
+      window.addEventListener(
+        'scroll',
+        utils.throttle(() => {
+          initDom.lazyLoad()
+        }, 100),
+        false
+      )
     </script>
   </body>
 </html>
